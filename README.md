@@ -1,1 +1,1 @@
-# dell-workshop
+# Dell in Class - Go Microservices
