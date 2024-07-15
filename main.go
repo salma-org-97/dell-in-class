@@ -1,17 +1,68 @@
 package main
 
-// album represents data about a record album.
-type album struct {
-	ID     string  `json:"id"`
-	Title  string  `json:"title"`
-	Artist string  `json:"artist"`
-	Price  float64 `json:"price"`
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
+
+// book represents data about a book.
+type book struct {
+	ID                string  `json:"id"`
+	Title             string  `json:"title"`
+	Author            string  `json:"author"`
+	YearOfPublication int     `json:"publication_year"`
+	Price             float64 `json:"price"`
 }
 
-// albums slice to seed record album data.
-var albums = []album{
-	{ID: "1", Title: "Blue Train", Artist: "John Coltrane", Price: 56.99},
-	{ID: "2", Title: "Jeru", Artist: "Gerry Mulligan", Price: 17.99},
-	{ID: "3", Title: "Sarah Vaughan and Clifford Brown", Artist: "Sarah Vaughan", Price: 39.99},
+// books slice to seed record book data.
+var books = []book{
+	{ID: "1", Title: "Life Stories", Author: "Heather Newbold", YearOfPublication: 1998, Price: 4.99},
+	{ID: "2", Title: "All Around The Town", Author: "Mary Higgins Clark", YearOfPublication: 2020, Price: 5.29},
+	{ID: "3", Title: "The 48 Laws of Power", Author: "Robert Greene", YearOfPublication: 2023, Price: 10.99},
 }
 
+func main() {
+	router := gin.Default()
+	router.GET("/books", getBooks)
+	router.GET("/books/:id", getBookByID)
+	router.POST("/books", postBooks)
+
+	router.Run("localhost:8080")
+}
+
+// getBooks responds with the list of all books as JSON.
+func getBooks(c *gin.Context) {
+	c.IndentedJSON(http.StatusOK, books)
+}
+
+// postBooks adds an book from JSON received in the request body.
+func postBooks(c *gin.Context) {
+	var newBook book
+
+	// Call BindJSON to bind the received JSON to
+	// newBook.
+	if err := c.BindJSON(&newBook); err != nil {
+		return
+	}
+
+	// Add the new book to the slice.
+	books = append(books, newBook)
+	c.IndentedJSON(http.StatusCreated, newBook)
+}
+
+// getBookByID locates the book whose ID value matches the id
+// parameter sent by the client, then returns that book as a response.
+func getBookByID(c *gin.Context) {
+	id := c.Param("id")
+
+	// Loop through the list of books, looking for
+	// an book whose ID value matches the parameter.
+	for _, a := range books {
+		if a.ID == id {
+			c.IndentedJSON(http.StatusOK, a)
+			return
+		}
+	}
+	c.IndentedJSON(http.StatusNotFound, gin.H{"message": "book not found"})
+}
